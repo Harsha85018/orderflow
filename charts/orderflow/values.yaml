@@ -52,3 +52,31 @@ services:
     nodePort: 30084
     env:
       SPRING_MONGODB_URI: mongodb://notifications-db:27017/notifications
+
+probes:
+  # Up to 3 minutes to boot before liveness checks begin.
+  startup:
+    httpGet:
+      path: /actuator/health/liveness
+      port: http
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 36
+  # Lenient on purpose: restart only after ~2 minutes of consecutive failures.
+  # Restarting a pod that is slow (not dead) adds load and can cascade.
+  liveness:
+    httpGet:
+      path: /actuator/health/liveness
+      port: http
+    periodSeconds: 20
+    timeoutSeconds: 5
+    failureThreshold: 6
+  # Strict: stop sending traffic quickly when a pod is struggling. This never
+  # restarts anything.
+  readiness:
+    httpGet:
+      path: /actuator/health/readiness
+      port: http
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3

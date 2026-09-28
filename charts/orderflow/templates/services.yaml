@@ -53,23 +53,12 @@ spec:
           {{- end }}
           resources:
             {{- toYaml $.Values.resources | nindent 12 }}
-          # Up to 3 minutes to boot before liveness checks begin.
           startupProbe:
-            httpGet:
-              path: /actuator/health/liveness
-              port: http
-            periodSeconds: 5
-            failureThreshold: 36
+            {{- toYaml $.Values.probes.startup | nindent 12 }}
           livenessProbe:
-            httpGet:
-              path: /actuator/health/liveness
-              port: http
-            periodSeconds: 10
+            {{- toYaml $.Values.probes.liveness | nindent 12 }}
           readinessProbe:
-            httpGet:
-              path: /actuator/health/readiness
-              port: http
-            periodSeconds: 5
+            {{- toYaml $.Values.probes.readiness | nindent 12 }}
 ---
 apiVersion: v1
 kind: Service

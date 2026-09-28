@@ -6,7 +6,7 @@ N=${1:-1000}
 P=${2:-5}
 
 (cd "$ROOT" && docker compose exec -T inventory-db psql -U inventory -qc \
-  "UPDATE products SET available_quantity = 100000 WHERE id = 'p-42';")
+  "UPDATE products SET available_quantity = 100000 WHERE id = 'p-42';" < /dev/null)
 
 echo "sending $N orders, $P at a time..."
 START=$(date +%s)
