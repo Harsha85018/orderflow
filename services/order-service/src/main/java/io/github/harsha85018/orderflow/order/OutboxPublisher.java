@@ -28,7 +28,7 @@ public class OutboxPublisher {
             try {
                 // Key by order ID: all events for one order land on the same
                 // partition, so consumers see them in order.
-                kafka.send(MessagingConfig.ORDER_EVENTS_TOPIC,
+                kafka.send(event.getTopic(),
                                 event.getAggregateId().toString(), event.getPayload())
                         .get(5, TimeUnit.SECONDS);
                 event.markPublished();

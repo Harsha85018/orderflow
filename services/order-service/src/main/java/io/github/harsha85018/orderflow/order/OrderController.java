@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/orders")
 public class OrderController {
 
-    private final OrderService orderService;
+    private final OrderSaga saga;
     private final OrderRepository orders;
 
-    public OrderController(OrderService orderService, OrderRepository orders) {
-        this.orderService = orderService;
+    public OrderController(OrderSaga saga, OrderRepository orders) {
+        this.saga = saga;
         this.orders = orders;
     }
 
@@ -28,7 +28,7 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<Order> create(@Valid @RequestBody CreateOrderRequest req) {
-        Order order = orderService.create(
+        Order order = saga.start(
                 req.customerId(), req.productId(), req.quantity(), req.amountCents());
         return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }
