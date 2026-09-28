@@ -1,1 +1,7 @@
 logs/
+
+# Terraform: local state, downloaded providers, and personal settings.
+infra/terraform/.terraform/
+infra/terraform/*.tfstate
+infra/terraform/*.tfstate.*
+infra/terraform/terraform.tfvars
