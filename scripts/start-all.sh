@@ -3,7 +3,11 @@
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 mkdir -p "$ROOT/logs"
 
-(cd "$ROOT" && docker compose up -d)
+if ! docker info >/dev/null 2>&1; then
+  echo "Docker isn't running. Start Docker Desktop (open -a Docker) and try again."
+  exit 1
+fi
+(cd "$ROOT" && docker compose up -d) || exit 1
 
 start() {
   local name=$1 port=$2
@@ -30,7 +34,7 @@ wait_for() {
 
 # Order service first: it creates the Kafka topics the others use.
 start order-service 8081
-wait_for order-service 8081
+wait_for order-service 8081 || exit 1
 
 start payment-service 8082
 start inventory-service 8083

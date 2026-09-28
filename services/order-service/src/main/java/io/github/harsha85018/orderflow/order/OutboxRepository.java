@@ -17,4 +17,7 @@ public interface OutboxRepository extends JpaRepository<OutboxEvent, UUID> {
             FOR UPDATE SKIP LOCKED
             """, nativeQuery = true)
     List<OutboxEvent> lockNextBatch();
+
+    @Query(value = "SELECT count(*) FROM outbox_events WHERE published_at IS NULL", nativeQuery = true)
+    long countUnpublished();
 }

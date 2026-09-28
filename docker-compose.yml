@@ -45,13 +45,34 @@ services:
     ports:
       - "9092:9092"
 
-  # Receives traces over OTLP (4318) and shows them in a web UI (16686).
   jaeger:
     image: jaegertracing/jaeger:latest
     ports:
       - "16686:16686"
       - "4317:4317"
       - "4318:4318"
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      # Local-only convenience: open without a login screen.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards:ro
 
 volumes:
   orders-data:

@@ -25,20 +25,23 @@ public class OrderSaga {
     private final JsonMapper json;
     private final Tracer tracer;
     private final ApplicationEventPublisher events;
+    private final SagaMetrics metrics;
 
     public OrderSaga(OrderRepository orders, OutboxRepository outbox, JsonMapper json, Tracer tracer,
-                     ApplicationEventPublisher events) {
+                     ApplicationEventPublisher events, SagaMetrics metrics) {
         this.orders = orders;
         this.outbox = outbox;
         this.json = json;
         this.tracer = tracer;
         this.events = events;
+        this.metrics = metrics;
     }
 
     @Transactional
     public Order start(String customerId, String productId, int quantity, long amountCents) {
         Order order = orders.save(new Order(customerId, productId, quantity, amountCents));
         publishOrderEvent(order, "OrderCreated");
+        metrics.orderStarted();
         publish(Topics.INVENTORY_COMMANDS, order, "RESERVE_STOCK",
                 new InventoryCommand(UUID.randomUUID(), "RESERVE_STOCK",
                         order.getId(), productId, quantity));
@@ -63,6 +66,7 @@ public class OrderSaga {
             }
             case "STOCK_REJECTED" -> {
                 if (order.cancel("OUT_OF_STOCK")) {
+                    metrics.orderFinished(order);
                     publishOrderEvent(order, "OrderCancelled");
                 }
             }
@@ -83,11 +87,13 @@ public class OrderSaga {
         switch (reply.type()) {
             case "PAYMENT_AUTHORIZED" -> {
                 if (order.confirm()) {
+                    metrics.orderFinished(order);
                     publishOrderEvent(order, "OrderConfirmed");
                 }
             }
             case "PAYMENT_DECLINED" -> {
                 if (order.cancel("PAYMENT_DECLINED")) {
+                    metrics.orderFinished(order);
                     // Compensation: undo the earlier stock reservation.
                     publish(Topics.INVENTORY_COMMANDS, order, "RELEASE_STOCK",
                             new InventoryCommand(UUID.randomUUID(), "RELEASE_STOCK",
