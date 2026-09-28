@@ -33,7 +33,13 @@ services:
     volumes:
       - inventory-data:/var/lib/postgresql/data
 
-  # Single-node Kafka in KRaft mode (no ZooKeeper needed).
+  notifications-db:
+    image: mongo:8
+    ports:
+      - "27018:27017"
+    volumes:
+      - notifications-data:/data/db
+
   kafka:
     image: apache/kafka:4.1.0
     ports:
@@ -43,3 +49,4 @@ volumes:
   orders-data:
   payments-data:
   inventory-data:
+  notifications-data:
