@@ -1,0 +1,6 @@
+apiVersion: v2
+name: orderflow
+description: Order, payment, inventory, and notification services for the OrderFlow saga
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

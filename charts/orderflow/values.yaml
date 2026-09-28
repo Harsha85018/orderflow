@@ -1,0 +1,54 @@
+image:
+  # Overridden on every deploy with a unique tag, so Kubernetes notices the new image.
+  tag: dev
+  # Images are loaded straight into the kind node, never pulled from a registry.
+  pullPolicy: IfNotPresent
+
+# Settings shared by every service.
+common:
+  env:
+    SERVER_PORT: "8080"
+    SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    MANAGEMENT_OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
+    MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
+    MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+    JAVA_OPTS: "-XX:MaxRAMPercentage=60"
+
+# No CPU limit on purpose: CPU limits throttle Java badly during startup and
+# garbage collection. The memory limit is what protects the node.
+resources:
+  requests:
+    cpu: 100m
+    memory: 448Mi
+  limits:
+    memory: 576Mi
+
+services:
+  order-service:
+    nodePort: 30081
+    env:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://orders-db:5432/orders
+      SPRING_DATASOURCE_USERNAME: orders
+    secretEnv:
+      SPRING_DATASOURCE_PASSWORD: orders
+
+  payment-service:
+    nodePort: 30082
+    env:
+      SPRING_DATASOURCE_URL: jdbc:mysql://payments-db:3306/payments?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: payments
+    secretEnv:
+      SPRING_DATASOURCE_PASSWORD: payments
+
+  inventory-service:
+    nodePort: 30083
+    env:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://inventory-db:5432/inventory
+      SPRING_DATASOURCE_USERNAME: inventory
+    secretEnv:
+      SPRING_DATASOURCE_PASSWORD: inventory
+
+  notification-service:
+    nodePort: 30084
+    env:
+      SPRING_MONGODB_URI: mongodb://notifications-db:27017/notifications
