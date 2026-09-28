@@ -22,6 +22,18 @@ services:
     volumes:
       - payments-data:/var/lib/mysql
 
+  inventory-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: inventory
+      POSTGRES_PASSWORD: inventory
+      POSTGRES_DB: inventory
+    ports:
+      - "5441:5432"
+    volumes:
+      - inventory-data:/var/lib/postgresql/data
+
 volumes:
   orders-data:
   payments-data:
+  inventory-data:
