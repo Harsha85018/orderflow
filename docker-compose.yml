@@ -1,0 +1,14 @@
+services:
+  orders-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: orders
+      POSTGRES_PASSWORD: orders
+      POSTGRES_DB: orders
+    ports:
+      - "5440:5432"
+    volumes:
+      - orders-data:/var/lib/postgresql/data
+
+volumes:
+  orders-data:
