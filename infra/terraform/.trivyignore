@@ -1,0 +1,22 @@
+# Accepted risks for a short-lived demo environment. Each one has a reason.
+
+# AWS-0040: the Kubernetes API has a public endpoint. Needed to run kubectl
+# from a laptop without paying for a bastion host or VPN. Mitigated by
+# limiting access to our own IP (api_allowed_cidrs, fixes AWS-0041).
+AWS-0040
+
+# AWS-0104: nodes may connect out to any address. With no NAT gateway, nodes
+# need direct internet access to pull images and reach AWS APIs.
+# Production: VPC endpoints for ECR, S3, and STS, plus egress filtering.
+AWS-0104
+
+# AWS-0164: public subnets assign public IPs to nodes. This avoids a NAT
+# gateway (~$33/month) for a demo; security groups still limit inbound access.
+# Production: nodes in private subnets behind NAT.
+AWS-0164
+
+# AWS-0041: this check fails on any public CIDR, not only 0.0.0.0/0. Ours is
+# narrowed to a single /32 (our own IP, via api_allowed_cidrs), down from the
+# whole internet. Passing it fully requires a private-only endpoint reached
+# through a VPN or bastion host.
+AWS-0041

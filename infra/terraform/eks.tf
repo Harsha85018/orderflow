@@ -8,6 +8,13 @@ module "eks" {
   # kubectl from your laptop needs to reach the API server.
   endpoint_public_access = true
 
+  # Only our own IP may reach the public endpoint (fixes Trivy AWS-0041).
+  endpoint_public_access_cidrs = var.api_allowed_cidrs
+
+  # Nodes reach the control plane privately, inside the VPC. Without this,
+  # the IP restriction above would also lock the worker nodes out.
+  endpoint_private_access = true
+
   # Whoever runs terraform apply gets admin access to the cluster.
   enable_cluster_creator_admin_permissions = true
 

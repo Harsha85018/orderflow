@@ -44,3 +44,8 @@ variable "alert_email" {
   description = "Where budget alerts are sent. Set in terraform.tfvars (not committed)."
   type        = string
 }
+
+variable "api_allowed_cidrs" {
+  description = "IP ranges allowed to reach the Kubernetes API over the internet, e.g. [\"203.0.113.4/32\"]."
+  type        = list(string)
+}
