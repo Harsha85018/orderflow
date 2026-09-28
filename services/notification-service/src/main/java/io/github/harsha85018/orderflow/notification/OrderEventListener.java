@@ -23,15 +23,15 @@ public class OrderEventListener {
 
     @KafkaListener(topics = "order-events")
     public void onOrderEvent(String payload) {
-        OrderCreatedEvent event = json.readValue(payload, OrderCreatedEvent.class);
-        if (!"OrderCreated".equals(event.eventType())) {
+        OrderEvent event = json.readValue(payload, OrderEvent.class);
+        Notification notification = Notification.from(event);
+        if (notification == null) {
             return;
         }
 
         try {
-            // insert (not save): fails if this event ID was already stored.
-            mongo.insert(Notification.forOrderCreated(event));
-            log.info("Notification stored for order {} (event {})", event.orderId(), event.eventId());
+            mongo.insert(notification);
+            log.info("{} notification stored for order {}", event.eventType(), event.orderId());
         } catch (DuplicateKeyException e) {
             log.info("Duplicate event {} ignored", event.eventId());
         }

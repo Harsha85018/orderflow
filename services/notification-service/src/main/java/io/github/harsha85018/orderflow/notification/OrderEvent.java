@@ -3,7 +3,7 @@ package io.github.harsha85018.orderflow.notification;
 import java.time.Instant;
 import java.util.UUID;
 
-public record OrderCreatedEvent(
+public record OrderEvent(
         UUID eventId,
         String eventType,
         UUID orderId,

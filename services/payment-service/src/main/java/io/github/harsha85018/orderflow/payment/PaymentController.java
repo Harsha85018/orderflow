@@ -12,33 +12,21 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/payments")
 public class PaymentController {
 
-    // Simulated card limit: anything above $500 is declined.
-    private static final long DECLINE_ABOVE_CENTS = 50_000;
-
+    private final PaymentService paymentService;
     private final PaymentRepository payments;
 
-    public PaymentController(PaymentRepository payments) {
+    public PaymentController(PaymentService paymentService, PaymentRepository payments) {
+        this.paymentService = paymentService;
         this.payments = payments;
     }
 
-    public record ChargeRequest(
-            @NotNull UUID orderId,
-            @Min(1) long amountCents) {}
+    public record ChargeRequest(@NotNull UUID orderId, @Min(1) long amountCents) {}
 
     @PostMapping
     public ResponseEntity<Payment> charge(@Valid @RequestBody ChargeRequest req) {
-        // Idempotency: if this order was already charged, return the original
-        // result instead of charging again.
-        return payments.findByOrderId(req.orderId())
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> {
-                    PaymentStatus status = req.amountCents() > DECLINE_ABOVE_CENTS
-                            ? PaymentStatus.DECLINED
-                            : PaymentStatus.AUTHORIZED;
-                    Payment payment = payments.save(
-                            new Payment(req.orderId(), req.amountCents(), status));
-                    return ResponseEntity.status(HttpStatus.CREATED).body(payment);
-                });
+        var result = paymentService.charge(req.orderId(), req.amountCents());
+        HttpStatus code = result.created() ? HttpStatus.CREATED : HttpStatus.OK;
+        return ResponseEntity.status(code).body(result.payment());
     }
 
     @GetMapping("/{id}")
