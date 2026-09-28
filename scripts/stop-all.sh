@@ -5,14 +5,14 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PORTS="8081 8082 8083 8084"
 
 for port in $PORTS; do
-  pids=$(lsof -ti tcp:"$port" 2>/dev/null)
+  pids=$(lsof -ti tcp:"$port" -sTCP:LISTEN 2>/dev/null)
   [ -n "$pids" ] && kill $pids && echo "stopping service on $port"
 done
 
 for _ in $(seq 1 30); do
   busy=""
   for port in $PORTS; do
-    lsof -ti tcp:"$port" >/dev/null 2>&1 && busy="$busy $port"
+    lsof -ti tcp:"$port" -sTCP:LISTEN >/dev/null 2>&1 && busy="$busy $port"
   done
   [ -z "$busy" ] && echo "all services stopped" && break
   sleep 1

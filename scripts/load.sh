@@ -9,6 +9,7 @@ P=${2:-5}
   "UPDATE products SET available_quantity = 100000 WHERE id = 'p-42';")
 
 echo "sending $N orders, $P at a time..."
+START=$(date +%s)
 # Each number from seq arrives as $1 inside the command, so xargs never has
 # to rewrite the command text (macOS xargs limits that to 255 bytes).
 seq 1 "$N" | xargs -P "$P" -n 1 bash -c '
@@ -25,3 +26,24 @@ seq 1 "$N" | xargs -P "$P" -n 1 bash -c '
     -H "Content-Type: application/json" -d "$body"
   sleep 0.2
 ' _ | sort | uniq -c
+
+# Let the last sagas finish and Prometheus scrape them, then summarize the run.
+sleep 10
+WINDOW=$(( $(date +%s) - START + 5 ))
+
+prom() {
+  curl -s -G localhost:9090/api/v1/query --data-urlencode "query=$1" | python3 -c '
+import json, sys
+r = json.load(sys.stdin)["data"]["result"]
+print(float(r[0]["value"][1]) if r else "nan")
+'
+}
+
+done_count=$(prom "sum(increase(orders_completed_total[${WINDOW}s]))")
+echo "completed: $(printf '%.0f' "$done_count") orders in the last ${WINDOW}s"
+for pair in 50:0.5 95:0.95 99:0.99; do
+  label=${pair%%:*}
+  q=${pair#*:}
+  v=$(prom "histogram_quantile($q, sum by (le) (increase(saga_duration_seconds_bucket[${WINDOW}s])))")
+  printf "  saga p%s: %.0f ms\n" "$label" "$(echo "$v * 1000" | bc -l)"
+done
