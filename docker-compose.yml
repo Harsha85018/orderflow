@@ -33,6 +33,12 @@ services:
     volumes:
       - inventory-data:/var/lib/postgresql/data
 
+  # Single-node Kafka in KRaft mode (no ZooKeeper needed).
+  kafka:
+    image: apache/kafka:4.1.0
+    ports:
+      - "9092:9092"
+
 volumes:
   orders-data:
   payments-data:
