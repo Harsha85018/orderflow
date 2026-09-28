@@ -45,6 +45,14 @@ services:
     ports:
       - "9092:9092"
 
+  # Receives traces over OTLP (4318) and shows them in a web UI (16686).
+  jaeger:
+    image: jaegertracing/jaeger:latest
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+
 volumes:
   orders-data:
   payments-data:

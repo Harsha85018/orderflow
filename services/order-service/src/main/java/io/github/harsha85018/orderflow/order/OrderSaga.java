@@ -1,6 +1,8 @@
 package io.github.harsha85018.orderflow.order;
 
 import io.github.harsha85018.orderflow.order.Messages.*;
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,11 +22,13 @@ public class OrderSaga {
     private final OrderRepository orders;
     private final OutboxRepository outbox;
     private final JsonMapper json;
+    private final Tracer tracer;
 
-    public OrderSaga(OrderRepository orders, OutboxRepository outbox, JsonMapper json) {
+    public OrderSaga(OrderRepository orders, OutboxRepository outbox, JsonMapper json, Tracer tracer) {
         this.orders = orders;
         this.outbox = outbox;
         this.json = json;
+        this.tracer = tracer;
     }
 
     @Transactional
@@ -93,15 +97,22 @@ public class OrderSaga {
     }
 
     private void publishOrderEvent(Order order, String eventType) {
-        UUID eventId = UUID.randomUUID();
         publish(Topics.ORDER_EVENTS, order, eventType, new OrderEvent(
-                eventId, eventType, order.getId(), order.getCustomerId(), order.getProductId(),
-                order.getQuantity(), order.getAmountCents(), order.getCancelReason(),
-                order.getCreatedAt()));
+                UUID.randomUUID(), eventType, order.getId(), order.getCustomerId(),
+                order.getProductId(), order.getQuantity(), order.getAmountCents(),
+                order.getCancelReason(), order.getCreatedAt()));
     }
 
     private void publish(String topic, Order order, String type, Object message) {
-        outbox.save(new OutboxEvent(UUID.randomUUID(), order.getId(), topic, type,
-                json.writeValueAsString(message)));
+        OutboxEvent row = new OutboxEvent(UUID.randomUUID(), order.getId(), topic, type,
+                json.writeValueAsString(message));
+
+        // Remember which trace this message belongs to, so the publisher
+        // (running later, on another thread) can continue it.
+        Span current = tracer.currentSpan();
+        if (current != null) {
+            row.attachTrace(current.context().traceId(), current.context().spanId());
+        }
+        outbox.save(row);
     }
 }

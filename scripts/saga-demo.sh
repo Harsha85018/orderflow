@@ -36,6 +36,7 @@ run() {
   elapsed=$(( $(now_ms) - start ))
   sleep 2
   echo "$result" | sed -E 's/.*"cancelReason":([^,]+).*"status":"([A-Z_]+)".*/  status=\2  reason=\1/'
+  echo "  order: $id"
   echo "  finished in ${elapsed} ms"
   echo "  $product stock: $before -> $(stock "$product")"
 }

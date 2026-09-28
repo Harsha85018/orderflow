@@ -23,6 +23,13 @@ public class OutboxEvent {
     @Column(nullable = false)
     private String payload;
 
+    // The trace that created this row, so publishing can continue that same trace.
+    @Column(name = "trace_id")
+    private String traceId;
+
+    @Column(name = "span_id")
+    private String spanId;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -40,6 +47,11 @@ public class OutboxEvent {
         this.createdAt = Instant.now();
     }
 
+    public void attachTrace(String traceId, String spanId) {
+        this.traceId = traceId;
+        this.spanId = spanId;
+    }
+
     public void markPublished() {
         this.publishedAt = Instant.now();
     }
@@ -49,4 +61,6 @@ public class OutboxEvent {
     public String getTopic() { return topic; }
     public String getEventType() { return eventType; }
     public String getPayload() { return payload; }
+    public String getTraceId() { return traceId; }
+    public String getSpanId() { return spanId; }
 }
