@@ -5,6 +5,7 @@ import io.micrometer.tracing.Span;
 import io.micrometer.tracing.Tracer;
 import java.util.UUID;
 import org.slf4j.Logger;
+import org.springframework.context.ApplicationEventPublisher;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,12 +24,15 @@ public class OrderSaga {
     private final OutboxRepository outbox;
     private final JsonMapper json;
     private final Tracer tracer;
+    private final ApplicationEventPublisher events;
 
-    public OrderSaga(OrderRepository orders, OutboxRepository outbox, JsonMapper json, Tracer tracer) {
+    public OrderSaga(OrderRepository orders, OutboxRepository outbox, JsonMapper json, Tracer tracer,
+                     ApplicationEventPublisher events) {
         this.orders = orders;
         this.outbox = outbox;
         this.json = json;
         this.tracer = tracer;
+        this.events = events;
     }
 
     @Transactional
@@ -114,5 +118,6 @@ public class OrderSaga {
             row.attachTrace(current.context().traceId(), current.context().spanId());
         }
         outbox.save(row);
+        events.publishEvent(new OutboxWritten());
     }
 }
