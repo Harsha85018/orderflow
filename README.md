@@ -112,3 +112,12 @@ Once it's running, the Jaeger UI is at http://localhost:16686, Prometheus at htt
 The Terraform for AWS lives in `infra/terraform`. It validates without an AWS account (`terraform init -backend=false && terraform validate`) and needs `terraform.tfvars`, based on the example file, before a real plan or apply.
 
 ## Repository layout
+
+```
+services/          four Spring Boot services, each with its own Dockerfile
+charts/orderflow/  Helm chart for Kubernetes
+infra/terraform/   AWS infrastructure (VPC, EKS, ECR, budget alerts)
+infra/prometheus/  Prometheus scrape configuration
+infra/grafana/     provisioned Grafana datasource and dashboard
+scripts/           start, stop, demo, load, race, trace, and replay tools
+```
