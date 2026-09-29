@@ -64,7 +64,7 @@ On the happy path the payment is authorized and the order becomes `CONFIRMED`. I
 | Concurrent duplicate charges | 20 identical charge requests at once: **14 errors in 100 requests** before the fix, **0 in 400** after, at twice the concurrency. No order was ever charged twice, before or after. |
 | Database outage, short (47 s) | Orders waited, then all completed on their own within a minute of the database returning. |
 | Database outage, long (92 s) | Messages outlasted their retries and went to the dead-letter topic instead of being lost. Replaying them completed every order. |
-| Steady state on a laptop | Median saga time of 82 to 101 ms at about 16 orders per second, consistent across every run. |
+| Capacity on a laptop | With k6 sending orders at a fixed rate, the system kept up at **100 orders/sec** (about 600 Kafka messages/sec across the saga): median saga 42 ms, p95 0.6 s, and every order completed. At 200/sec sagas queued (p95 5.4 s), and at 300/sec orders arrived faster than they finished. Measured on one laptop running all services, Kafka, and four databases, with 10% trace sampling. |
 
 ## Things that went wrong, and what they taught me
 
@@ -104,6 +104,7 @@ Once it's running, the Jaeger UI is at http://localhost:16686, Prometheus at htt
 | `scripts/trace.sh <order-id>` | Prints every span of an order's trace from Jaeger |
 | `scripts/load.sh [orders] [parallel]` | Sends a mixed load and prints saga latency percentiles |
 | `scripts/race-test.sh [rounds] [concurrent]` | Fires identical payment requests at once to check for races |
+| `scripts/capacity.sh [rates...]` | Steps up the order rate with k6 and reports where the system stops keeping up |
 | `scripts/replay-dlt.sh <topic>` | Moves dead-lettered messages back onto their topic |
 | `scripts/k8s-deploy.sh` | Builds the images, loads them into kind, and deploys with Helm |
 | `scripts/k8s-load.sh [orders] [parallel]` | Generates load from inside the Kubernetes cluster |

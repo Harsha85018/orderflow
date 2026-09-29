@@ -2,11 +2,24 @@ global:
   scrape_interval: 5s
 
 scrape_configs:
-  - job_name: orderflow
+  # Services running directly on the Mac (scripts/start-all.sh).
+  - job_name: orderflow-host
     metrics_path: /actuator/prometheus
     static_configs:
-      # The kind node, reached over the shared Docker network. Each service
-      # is exposed on a fixed NodePort (see charts/orderflow/values.yaml).
+      - targets: ["host.docker.internal:8081"]
+        labels: { service: order-service }
+      - targets: ["host.docker.internal:8082"]
+        labels: { service: payment-service }
+      - targets: ["host.docker.internal:8083"]
+        labels: { service: inventory-service }
+      - targets: ["host.docker.internal:8084"]
+        labels: { service: notification-service }
+
+  # Services running in the kind cluster (scripts/k8s-deploy.sh), via NodePorts.
+  # Only one of these two jobs is up at a time; the other shows as down.
+  - job_name: orderflow-k8s
+    metrics_path: /actuator/prometheus
+    static_configs:
       - targets: ["orderflow-control-plane:30081"]
         labels: { service: order-service }
       - targets: ["orderflow-control-plane:30082"]
