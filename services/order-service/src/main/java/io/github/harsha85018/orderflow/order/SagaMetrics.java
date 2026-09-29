@@ -13,11 +13,16 @@ public class SagaMetrics {
 
     private final MeterRegistry registry;
 
-    public SagaMetrics(MeterRegistry registry, OutboxRepository outbox) {
+    public SagaMetrics(MeterRegistry registry, OutboxRepository outbox, OrderRepository orders) {
         this.registry = registry;
         // Read on every scrape: how many messages are waiting to go to Kafka.
         Gauge.builder("outbox.backlog", outbox, OutboxRepository::countUnpublished)
                 .description("Outbox rows not yet published to Kafka")
+                .register(registry);
+
+        // Alert on this: sagas that stopped moving. It should always be 0.
+        Gauge.builder("orders.stuck", orders, OrderRepository::countStuck)
+                .description("Orders still mid-saga more than 2 minutes after creation")
                 .register(registry);
     }
 
